@@ -1,9 +1,3 @@
-node_modules/
-dist/
-.env
-.env.local
-.env.*.local
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.DS_Store 
+/node_modules
+/.env
+/package-lock.json
