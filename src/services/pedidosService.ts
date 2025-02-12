@@ -4,15 +4,14 @@ import { Produto } from "../models/produtoModel";
 import { Usuario } from "../models/usuarioModel";
 
 export const criarPedido = async (
-  sessaoId: string,
-  produtos: Produto[],
+  pedido: Pedido,
   usuario: Usuario
 ): Promise<Pedido> => {
   // Verificar se a sessão existe e está ativa
   const { data: sessao, error: sessaoError } = await supabase
     .from("sessoes")
     .select("status")
-    .eq("id", sessaoId)
+    .eq("id", pedido.sessao_id)
     .single();
 
   if (sessaoError)
@@ -20,11 +19,12 @@ export const criarPedido = async (
   if (!sessao || sessao.status !== "ativa") throw new Error("Sessão não ativa");
 
   // Criar o pedido
-  const { data: pedido, error: pedidoError } = await supabase
+  const { data: pedidoData, error: pedidoError } = await supabase
     .from("pedidos")
+
     .insert({
-      sessao_id: sessaoId,
-      produtos: produtos,
+      sessao_id: pedido.sessao_id,
+      produtos: pedido.produtos,
       status: "pendente",
       data_criacao: new Date().toISOString(),
     })
@@ -43,13 +43,14 @@ export const criarPedido = async (
   pedidoPendenteChannel.send({
     type: "broadcast",
     event: "novo_pedido",
-    payload: { sessaoId, usuario },
+    payload: { pedidoData, usuario },
   });
 
-  return pedido;
+  return pedidoData;
 };
 
 // Função para alterar o status do pedido
+
 export const alterarStatusPedido = async (
   pedidoId: string,
   status: "aprovado" | "pronto" | "entregue",
@@ -102,4 +103,25 @@ export const alterarStatusPedido = async (
   });
 
   return pedido;
+};
+
+export const listarPedidos = async (usuario: Usuario): Promise<Pedido[]> => {
+  // Verificar se o usuário tem permissão para listar pedidos
+  if (
+    usuario.tipo !== "garcom" &&
+    usuario.tipo !== "admin" &&
+    usuario.tipo !== "chef"
+  ) {
+    throw new Error("Somente o garçom ou o administrador podem listar pedidos");
+  }
+
+  // Listar todos os pedidos
+  const { data: pedidos, error: pedidosError } = await supabase
+    .from("pedidos")
+    .select("*");
+
+  if (pedidosError)
+    throw new Error("Erro ao listar pedidos: " + pedidosError.message);
+
+  return pedidos;
 };

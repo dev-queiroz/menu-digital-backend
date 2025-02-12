@@ -10,8 +10,11 @@ export const uploadImage = async (file: Buffer, fileName: string) => {
       contentType: "image/webp",
     });
 
-  if (error)
-    throw new Error(`Erro ao fazer upload da imagem: ${error.message}`);
+  if (error || !data) {
+    throw new Error(
+      `Erro ao fazer upload da imagem: ${error?.message || "Erro desconhecido"}`
+    );
+  }
 
   return data?.path;
 };

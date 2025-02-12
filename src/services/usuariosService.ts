@@ -1,11 +1,15 @@
 import supabase from "../config/supabase";
 import { Usuario } from "../models/usuarioModel";
+import bcrypt from "bcrypt";
 
 // Função para criar um novo usuário
-export const criarUsuario = async (usuario: Usuario): Promise<Usuario> => {
+export const criarUsuario = async (
+  usuario: Omit<Usuario, "senhaHash">
+): Promise<Usuario> => {
+  const senhaHash = await bcrypt.hash(usuario.senha || "", 10); // Adicionando tratamento para senha undefined
   const { data, error } = await supabase
     .from("usuarios")
-    .insert([usuario])
+    .insert([{ ...usuario, senha: senhaHash }])
     .single();
 
   if (error) throw new Error("Erro ao criar usuário: " + error.message);
@@ -50,6 +54,15 @@ export const buscarUsuarioPorId = async (
     .single();
 
   if (error) throw new Error("Erro ao buscar usuário: " + error.message);
+
+  return data;
+};
+
+// Função para listar todos os usuários
+export const listarUsuarios = async (): Promise<Usuario[]> => {
+  const { data, error } = await supabase.from("usuarios").select("*");
+
+  if (error) throw new Error("Erro ao listar usuários: " + error.message);
 
   return data;
 };
