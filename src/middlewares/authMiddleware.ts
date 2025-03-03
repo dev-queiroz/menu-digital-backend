@@ -1,30 +1,52 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import { supabase } from "../config/database";
+import { User } from "../models/user";
+import { responseError } from "../utils";
 
-const JWT_SECRET = process.env.JWT_SECRET || "sua_chave_secreta";
+declare global {
+  namespace Express {
+    interface Request {
+      user?: User;
+    }
+  }
+}
 
-export const authMiddleware = (
+export const authMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction
-): void => {
-  const authHeader = req.headers.authorization;
+) => {
+  const token = req.headers.authorization?.split(" ")[1];
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(401).json({ error: "Token de autenticação não fornecido." });
-    return; // Impede o retorno de um valor explícito
+  if (!token) {
+    return responseError(res, 401, "No token provided");
   }
-
-  const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as {
-      id: string;
-      tipo: string;
-    };
-    (req as any).user = decoded; // Anexa o usuário decodificado ao request
-    next(); // Continua para o próximo middleware
-  } catch (error) {
-    res.status(401).json({ error: "Token inválido ou expirado." });
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data.user) {
+      return responseError(res, 401, "Invalid or expired token");
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("id, email, role, name, created_at")
+      .eq("id", data.user.id)
+      .single();
+    if (userError) throw userError;
+
+    req.user = userData as User;
+    next();
+  } catch (err) {
+    return responseError(res, 500, "Authentication error", err);
   }
+};
+
+export const requireRole = (roles: User["role"][]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return responseError(res, 403, "Insufficient permissions");
+    }
+    next();
+  };
 };

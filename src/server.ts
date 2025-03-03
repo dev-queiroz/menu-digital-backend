@@ -1,10 +1,19 @@
-import server from "./index";
+import express, { Request, Response } from "express";
 import dotenv from "dotenv";
+import { rateLimiter, errorHandler } from "./middlewares";
+import routes from "./routes";
+import { logger } from "./utils";
 
 dotenv.config();
 
+const app = express();
 const PORT = process.env.PORT || 3000;
 
-server.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+app.use(express.json());
+app.use(rateLimiter);
+app.use(routes);
+app.use(errorHandler);
+
+app.listen(PORT, () => {
+  logger.info(`Server running on port ${PORT}`);
 });
