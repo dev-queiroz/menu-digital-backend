@@ -1,4 +1,20 @@
 {
+  "name": "stripe-payment-integration",
+  "version": "1.0.0",
+  "description": "A simple integration of Stripe and Express",
+  "main": "src/server.ts",
+  "scripts": {
+    "start": "node dist/server.js",
+    "build": "tsc",
+    "dev": "ts-node src/server.ts",
+    "test": "jest --config jest.config.ts"
+  },
+  "keywords": [
+    "stripe",
+    "express",
+    "supabase"
+  ],
+  "author": "Douglas Vinícios dos Santos Queiroz",
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
     "dotenv": "^16.4.7",
@@ -10,6 +26,9 @@
     "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
-    "@types/stripe": "^8.0.416"
+    "@types/stripe": "^8.0.416",
+    "ts-jest": "^29.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
   }
 }
