@@ -1,0 +1,14 @@
+name: Ping Backend Health
+
+on:
+  schedule:
+    - cron: "*/5 * * * *" # Executa a cada 5 minutos
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Health Endpoint
+        run: |
+          curl -X GET "https://menu-digital-backend.onrender.com/health"
